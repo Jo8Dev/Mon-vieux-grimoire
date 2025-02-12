@@ -61,6 +61,19 @@ app.post('/api/books', async (req, res) => {
     }
 })
 
+app.post('/api/books/:id/rating', async (req, res) => {
+    try {
+        const book = await new Book({
+            ...req.body
+        })
+
+        await book.save()
+        res.status(201).json({ message: 'Livre enregistré !' })
+    } catch (error) {
+        res.status(400).json({ error: error.message })
+    }
+})
+
 app.put('/api/books/:id', async (req, res) => {
     try {
         await Book.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
