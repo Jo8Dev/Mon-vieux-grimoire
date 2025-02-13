@@ -5,6 +5,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 
 const bookRoutes = require('./routes/bookRoutes')
+const userRoutes = require('./routes/userRoutes')
 
 // Connexion à la base de données MongoDB avec l'URI défini dans les variables d'environnement
 // Si la connexion réussit, on affiche un message de succès, sinon un message d'erreur
@@ -27,5 +28,6 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/books', bookRoutes)
+app.use('/api/auth', userRoutes)
 
 module.exports = app;
