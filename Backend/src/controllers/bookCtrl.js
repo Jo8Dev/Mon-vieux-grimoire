@@ -1,5 +1,4 @@
 const Book = require('../models/Book')
-const { getBookByRating } = require('../utils/booksUtils')
 const fs = require('fs').promises
 
 
@@ -16,8 +15,7 @@ exports.getAllBooks = async (req, res) => {
 //Recuperation des 3 livres les mieux classé
 exports.bestRatedBooks = async (req, res) => {
     try {
-        const books = await Book.find()
-        const top3Books = getBookByRating(books)
+        const top3Books = await Book.find().sort({ averageRating: -1 }).limit(3) //On récupère tous les livres, on les classe par note moyenne décroissante, et on garde seulement les 3 premiers
         res.status(200).json(top3Books)
     } catch (error) {
         res.status(400).json({ error: error.message })
