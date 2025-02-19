@@ -1,9 +1,15 @@
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+require('dotenv').config({ path: '.env.local' })
+require('dotenv').config({ path: '.env' })
 
 exports.signup = async (req, res, next) => {
     try {
+        //Condition pour verifier que le mdp est présent et non vide
+        if (!req.body.password && req.body.password.trim() === "") {
+            return res.status(401).json({ error: "mots de passe invalide" })
+        }
         const hash = await bcrypt.hash(req.body.password, 10)
         const user = new User({
             email: req.body.email,
@@ -34,7 +40,7 @@ exports.login = async (req, res, next) => {
 
         res.status(200).json({
             userId: user._id,
-            token: jwt.sign({ userId: user._id }, 'RANDOM_TOKEN_SECRET', { expiresIn: '24h' })
+            token: jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' })
         });
     } catch (error) {
         res.status(500).json({ error })
