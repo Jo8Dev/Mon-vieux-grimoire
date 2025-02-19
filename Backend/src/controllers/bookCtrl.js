@@ -80,32 +80,40 @@ exports.updateBook = async (req, res) => {
 //Suppression d'un livre
 exports.deleteBook = async (req, res) => {
     try {
-        const book = await Book.findOne({ _id: req.params.id });
+        const book = await Book.findOne({ _id: req.params.id })
         if (!book) {
-            return res.status(404).json({ message: 'Livre non trouvé' });
+            return res.status(404).json({ message: 'Livre non trouvé' })
         }
 
         if (book.userId != req.auth.userId) {
-            return res.status(401).json({ message: 'Non-autorisé' });
+            return res.status(401).json({ message: 'Non-autorisé' })
         }
 
-        const filename = book.imageUrl.split('/images/')[1];
+        const filename = book.imageUrl.split('/images/')[1]
 
         // Suppression du fichier image
-        await fs.unlink(`images/${filename}`);
+        await fs.unlink(`images/${filename}`)
 
         // Suppression du livre dans la base de données
-        await Book.deleteOne({ _id: req.params.id });
+        await Book.deleteOne({ _id: req.params.id })
 
-        res.status(200).json({ message: 'Livre supprimé !' });
+        res.status(200).json({ message: 'Livre supprimé !' })
 
     } catch (error) {
-        console.error("Erreur lors de la suppression :", error);
-        res.status(400).json({ error: error.message });
+        console.error("Erreur lors de la suppression :", error)
+        res.status(400).json({ error: error.message })
     }
 }
 
 //⚠️⚠️⚠️Non fonctionel pour l'instant
 exports.ratingBook = async (req, res) => {
+    try {
+        const userId = req.auth.userId
+        const rating = req.body.rating
 
+        //On vérifie si l'utilisateur a deja posté une note
+
+    } catch (error) {
+
+    }
 }
