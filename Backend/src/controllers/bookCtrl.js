@@ -2,10 +2,15 @@ const Book = require('../models/Book')
 const fs = require('fs').promises
 
 
+
+
 //Recuperation de tout les livres
 exports.getAllBooks = async (req, res) => {
     try {
         const books = await Book.find()
+        if (!books) {
+            return res.status(404).json({ message: 'Aucun livre trouvé' })
+        }
         res.status(200).json(books)
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -26,6 +31,9 @@ exports.bestRatedBooks = async (req, res) => {
 exports.getOneBook = async (req, res) => {
     try {
         const book = await Book.findOne({ _id: req.params.id })
+        if (!book) {
+            return res.status(404).json({ message: 'Livre non trouvé' })
+        }
         res.status(200).json(book)
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -35,9 +43,9 @@ exports.getOneBook = async (req, res) => {
 //Création d'un nouveau livre
 exports.createBook = async (req, res) => {
     try {
-        const bookObject = JSON.parse(req.body.book)
-        delete bookObject._id
-        delete bookObject._userId
+        const bookObject = JSON.parse(req.body.book) // Conversion de l'objet JSON en objet JavaScript
+        delete bookObject._id // Suppression de l'ID car MongoDB en génère un automatiquement
+        delete bookObject._userId // Suppression de l'userId pour éviter une modification frauduleuse
 
         const book = new Book({
             ...bookObject,
@@ -45,9 +53,9 @@ exports.createBook = async (req, res) => {
             imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
         })
 
-        await book.save();
+        await book.save()
 
-        res.status(201).json({ message: 'Livre enregistré !' });
+        res.status(201).json({ message: 'Livre enregistré !' })
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -56,19 +64,28 @@ exports.createBook = async (req, res) => {
 //MAJ d'un livre
 exports.updateBook = async (req, res) => {
     try {
-        const bookObject = req.file ? {
+
+        const bookObject = req.file ? { //Si un fichier est envoyé, on crée un nouvel objet avec les informations du livre et l'url de l'image
             ...JSON.parse(req.body.book),
             imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        } : { ...req.body }
+        } : { ...req.body } //Sinon, on crée un nouvel objet avec les informations du livre
 
-        delete bookObject._userId
+        delete bookObject._userId // Suppression de l'userId pour éviter une modification frauduleuse
 
-        const book = await Book.findOne({ _id: req.params.id })
-        if (book.userId != req.auth.userId) {
-            return res.status(401).json({ message: 'Non-autorisé' })
+        const book = await Book.findOne({ _id: req.params.id }) //On récupère le livre à modifier
+
+        //On vérifie si un fichier est envoyé ou non pour supprimer l'ancienne image
+        if (req.file) {
+            const filename = book.imageUrl.split('/images/')[1]//On récupère le nom du fichier à supprimer
+            await fs.unlink(`images/${filename}`)//On supprime le fichier
         }
 
-        await Book.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
+        //On vérifie si le livre existe
+        if (!book) {
+            return res.status(404).json({ message: 'Livre non trouvé' })
+        }
+
+        await Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id }) //On met à jour le livre avec les nouvelles informations
         res.status(200).json({ message: 'Livre modifié !' })
     } catch (error) {
         res.status(400).json({ error: error.message })
@@ -81,10 +98,6 @@ exports.deleteBook = async (req, res) => {
         const book = await Book.findOne({ _id: req.params.id })
         if (!book) {
             return res.status(404).json({ message: 'Livre non trouvé' })
-        }
-
-        if (book.userId != req.auth.userId) {
-            return res.status(401).json({ message: 'Non-autorisé' })
         }
 
         const filename = book.imageUrl.split('/images/')[1]
@@ -103,15 +116,43 @@ exports.deleteBook = async (req, res) => {
     }
 }
 
-//⚠️⚠️⚠️Non fonctionel pour l'instant
+//Notation d'un livre et calcul de la note moyenne
 exports.ratingBook = async (req, res) => {
     try {
-        const userId = req.auth.userId
-        const rating = req.body.rating
+        const rating = Number(req.body.rating) // Convertir la note en nombre
 
-        //On vérifie si l'utilisateur a deja posté une note
+        // Vérification de la validité de la note
+        if (isNaN(rating) || rating < 1 || rating > 5) {
+            return res.status(400).json({ message: "La note doit être un nombre entre 1 et 5" })
+        }
 
+        // Trouver le livre
+        const book = await Book.findOne({ _id: req.params.id })
+
+        // Vérifier si le livre existe
+        if (!book) {
+            return res.status(404).json({ message: "Livre non trouvé" })
+        }
+
+        // Vérifier si l'utilisateur a déjà noté ce livre
+        const userRating = book.ratings.find(rating => rating.userId === req.auth.userId)
+
+        if (userRating) {
+            return res.status(400).json({ message: "Vous avez déjà noté ce livre" });
+        }
+        book.ratings.push({ userId: req.auth.userId, grade: rating });
+
+
+        // Calculer la note moyenne
+        const averageRating = book.ratings.reduce((acc, rating) => acc + rating.grade, 0) / book.ratings.length
+        book.averageRating = averageRating
+
+        // Sauvegarder le livre avec la nouvelle note
+        await book.save()
+
+        // Réponse avec message et ID du livre
+        res.status(200).json(book)
     } catch (error) {
-
+        res.status(400).json({ error: error.message })
     }
 }

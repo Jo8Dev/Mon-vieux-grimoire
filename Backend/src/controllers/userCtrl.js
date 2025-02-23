@@ -1,13 +1,16 @@
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-require('dotenv').config({ path: '.env.local' })
-require('dotenv').config({ path: '.env' })
+const env = require('../config/env')
 
 exports.signup = async (req, res, next) => {
     try {
+        const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
+        if (!regex.test(req.body.email) || !req.body.email) { //Condition pour verifier que l'email est présent et valide
+            return res.status(401).json({ error: "email invalide" })
+        }
         //Condition pour verifier que le mdp est présent et non vide
-        if (!req.body.password && req.body.password.trim() === "") {
+        if (!req.body.password.trim()) {
             return res.status(401).json({ error: "mots de passe invalide" })
         }
         const hash = await bcrypt.hash(req.body.password, 10)
@@ -40,8 +43,8 @@ exports.login = async (req, res, next) => {
 
         res.status(200).json({
             userId: user._id,
-            token: jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' })
-        });
+            token: jwt.sign({ userId: user._id }, env.JWT_SECRET, { expiresIn: '24h' })
+        })
     } catch (error) {
         res.status(500).json({ error })
     }
