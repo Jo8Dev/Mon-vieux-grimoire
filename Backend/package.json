@@ -4,7 +4,7 @@
   "description": "Backend d'un site de notation de livre",
   "main": "./src/server.js",
   "scripts": {
-    "dev": "nodemon server",
+    "start": "nodemon server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

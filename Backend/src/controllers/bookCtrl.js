@@ -1,9 +1,6 @@
 const Book = require('../models/Book')
 const fs = require('fs').promises
 
-
-
-
 //Recuperation de tout les livres
 exports.getAllBooks = async (req, res) => {
     try {
@@ -13,7 +10,7 @@ exports.getAllBooks = async (req, res) => {
         }
         res.status(200).json(books)
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -23,7 +20,7 @@ exports.bestRatedBooks = async (req, res) => {
         const top3Books = await Book.find().sort({ averageRating: -1 }).limit(3) //On récupère tous les livres, on les classe par note moyenne décroissante, et on garde seulement les 3 premiers
         res.status(200).json(top3Books)
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -36,7 +33,7 @@ exports.getOneBook = async (req, res) => {
         }
         res.status(200).json(book)
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -48,16 +45,16 @@ exports.createBook = async (req, res) => {
         delete bookObject._userId // Suppression de l'userId pour éviter une modification frauduleuse
 
         const book = new Book({
-            ...bookObject,
-            userId: req.auth.userId,
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+            ...bookObject, // On récupère les informations du livre
+            userId: req.auth.userId, // On ajoute l'ID de l'utilisateur qui a créé le livre
+            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` // On ajoute l'URL de l'image
         })
 
         await book.save()
 
         res.status(201).json({ message: 'Livre enregistré !' })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -74,21 +71,25 @@ exports.updateBook = async (req, res) => {
 
         const book = await Book.findOne({ _id: req.params.id }) //On récupère le livre à modifier
 
+        //On vérifie si l'utilisateur est bien le propriétaire du livre
+        if (book.userId !== req.auth.userId) {
+            return res.status(403).json({ message: 'Requête non autorisée' })
+        }
+        //On vérifie si le livre existe
+        if (!book) {
+            return res.status(404).json({ message: 'Livre non trouvé' })
+        }
+
         //On vérifie si un fichier est envoyé ou non pour supprimer l'ancienne image
         if (req.file) {
             const filename = book.imageUrl.split('/images/')[1]//On récupère le nom du fichier à supprimer
             await fs.unlink(`images/${filename}`)//On supprime le fichier
         }
 
-        //On vérifie si le livre existe
-        if (!book) {
-            return res.status(404).json({ message: 'Livre non trouvé' })
-        }
-
         await Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id }) //On met à jour le livre avec les nouvelles informations
         res.status(200).json({ message: 'Livre modifié !' })
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -96,6 +97,12 @@ exports.updateBook = async (req, res) => {
 exports.deleteBook = async (req, res) => {
     try {
         const book = await Book.findOne({ _id: req.params.id })
+
+        // Vérifie si l'utilisateur est bien le propriétaire du livre
+        if (book.userId !== req.auth.userId) {
+            return res.status(403).json({ message: 'Requête non autorisée' })
+        }
+
         if (!book) {
             return res.status(404).json({ message: 'Livre non trouvé' })
         }
@@ -112,7 +119,7 @@ exports.deleteBook = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur lors de la suppression :", error)
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
 
@@ -153,6 +160,6 @@ exports.ratingBook = async (req, res) => {
         // Réponse avec message et ID du livre
         res.status(200).json(book)
     } catch (error) {
-        res.status(400).json({ error: error.message })
+        res.status(500).json({ error: error.message })
     }
 }
