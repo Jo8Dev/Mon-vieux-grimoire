@@ -21,7 +21,7 @@ exports.signup = async (req, res, next) => {
         await user.save()
         res.status(201).json({ message: "Nouvel utilisateur créé!" })
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ error: error._message }) //Message d'erreur qui ne renvoie pas d'information sur la présence ou non de l'email dans la bdd
     }
 
 
@@ -46,6 +46,6 @@ exports.login = async (req, res, next) => {
             token: jwt.sign({ userId: user._id }, env.JWT_SECRET, { expiresIn: '24h' })
         })
     } catch (error) {
-        res.status(500).json({ error })
+        res.status(500).json({ error: error.message })
     }
-};
+}

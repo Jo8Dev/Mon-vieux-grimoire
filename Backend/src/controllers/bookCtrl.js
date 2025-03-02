@@ -44,7 +44,7 @@ exports.createBook = async (req, res) => {
         delete bookObject._id // Suppression de l'ID car MongoDB en génère un automatiquement
         delete bookObject._userId // Suppression de l'userId pour éviter une modification frauduleuse
 
-        const book = new Book({
+        const book = new Book({ // Création d'un nouvel objet Book
             ...bookObject, // On récupère les informations du livre
             userId: req.auth.userId, // On ajoute l'ID de l'utilisateur qui a créé le livre
             imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` // On ajoute l'URL de l'image
@@ -145,14 +145,16 @@ exports.ratingBook = async (req, res) => {
         const userRating = book.ratings.find(rating => rating.userId === req.auth.userId)
 
         if (userRating) {
-            return res.status(400).json({ message: "Vous avez déjà noté ce livre" });
+            return res.status(400).json({ message: "Vous avez déjà noté ce livre" })
         }
-        book.ratings.push({ userId: req.auth.userId, grade: rating });
+
+        // Ajouter la nouvelle note
+        book.ratings.push({ userId: req.auth.userId, grade: rating })
 
 
         // Calculer la note moyenne
-        const averageRating = book.ratings.reduce((acc, rating) => acc + rating.grade, 0) / book.ratings.length
-        book.averageRating = averageRating
+        const averageRating = book.ratings.reduce((acc, rating) => acc + rating.grade, 0) / book.ratings.length // Additionner toutes les notes et diviser par le nombre de notes
+        book.averageRating = Math.round(averageRating * 10) / 10 // Arrondir la note à 1 chiffre après la virgule
 
         // Sauvegarder le livre avec la nouvelle note
         await book.save()
