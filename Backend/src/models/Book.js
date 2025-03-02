@@ -1,10 +1,9 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const bookSchema = new mongoose.Schema({
     userId: {
         type: String,
-        required: true,
-        unique: true // Cela garantit que chaque utilisateur peut créer un livre unique
+        required: true
     },
     title: {
         type: String,
