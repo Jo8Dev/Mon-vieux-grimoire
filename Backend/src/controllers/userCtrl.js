@@ -23,8 +23,6 @@ exports.signup = async (req, res, next) => {
     } catch (error) {
         res.status(500).json({ error: error._message }) //Message d'erreur qui ne renvoie pas d'information sur la présence ou non de l'email dans la bdd
     }
-
-
 }
 
 exports.login = async (req, res, next) => {

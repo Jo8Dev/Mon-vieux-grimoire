@@ -15,7 +15,7 @@ module.exports = (req, res, next) => {
         }
 
         const decodedToken = jwt.verify(token, env.JWT_SECRET) // On vérifie le token
-        req.auth = { userId: decodedToken.userId }    // On extrait l'ID utilisateur du token
+        req.auth = { userId: decodedToken.userId }    // On extrait l'ID utilisateur du token et on le stocke dans l'objet req.auth
 
         next()
     } catch (error) {

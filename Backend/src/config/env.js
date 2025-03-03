@@ -1,3 +1,4 @@
+// Exportation des variables d'environnement pour les charger dans l'order suivant: .env.local, .env
 function env() {
     require('dotenv').config({ path: ['.env.local', '.env'] })
     return {

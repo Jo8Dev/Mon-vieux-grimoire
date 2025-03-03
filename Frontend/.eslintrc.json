@@ -17,7 +17,7 @@
     ],
     "rules": {
         "quotes": [
-            "error",
+            "single",
             "double"
         ],
         "linebreak-style": [
