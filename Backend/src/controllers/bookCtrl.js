@@ -75,10 +75,6 @@ exports.updateBook = async (req, res) => {
         if (book.userId !== req.auth.userId) {
             return res.status(403).json({ message: 'Requête non autorisée' })
         }
-        //On vérifie si le livre existe
-        if (!book) {
-            return res.status(404).json({ message: 'Livre non trouvé' })
-        }
 
         //On vérifie si un fichier est envoyé ou non pour supprimer l'ancienne image
         if (req.file) {
@@ -101,10 +97,6 @@ exports.deleteBook = async (req, res) => {
         // Vérifie si l'utilisateur est bien le propriétaire du livre
         if (book.userId !== req.auth.userId) {
             return res.status(403).json({ message: 'Requête non autorisée' })
-        }
-
-        if (!book) {
-            return res.status(404).json({ message: 'Livre non trouvé' })
         }
 
         const filename = book.imageUrl.split('/images/')[1]
